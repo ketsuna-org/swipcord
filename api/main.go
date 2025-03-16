@@ -69,6 +69,7 @@ func main() {
 
 	r.Handle("/discord/login", http.HandlerFunc(controllers.DiscordOauth2))
 	r.Handle("/discord/callback", http.HandlerFunc(controllers.DiscordCallback))
+	r.Handle("/user", http.HandlerFunc(controllers.UserFormatted))
 
 	log.Println("Server is running on port 4000")
 	log.Panic(http.ListenAndServe(":4000", r))

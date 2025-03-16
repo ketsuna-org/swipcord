@@ -116,6 +116,20 @@ func DiscordCallback(w http.ResponseWriter, r *http.Request) {
 		user.ExpiresIn = expireTime
 		db.Save(&user)
 	}
+	redirectUri := fmt.Sprintf("http://%s/user?discord_id=%s", r.Host, user.DiscordID)
+	http.Redirect(w, r, redirectUri, http.StatusSeeOther)
+}
 
-	utils.RespondWithJSON(w, map[string]string{"message": "Successfully authenticated"}, http.StatusOK)
+func UserFormatted(w http.ResponseWriter, r *http.Request) {
+	db := models.GetDatabase(r)
+	// get Discord ID from the URL parameters
+	discordID := r.URL.Query().Get("discord_id")
+	if discordID == "" {
+		utils.RespondWithError(w, http.StatusBadRequest, "No Discord ID provided")
+		return
+	}
+	user := models.User{}
+	// get the user from the database
+	db.Where("discord_id = ?", discordID).First(&user)
+	utils.RespondWithJSON(w, user, http.StatusOK)
 }
