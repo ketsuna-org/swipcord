@@ -1,6 +1,9 @@
 package models
 
 import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
 	"time"
 
 	"gorm.io/gorm"
@@ -8,12 +11,14 @@ import (
 
 type User struct {
 	gorm.Model
-	DiscordID       string                  `gorm:"unique;not null" json:"discord_id"`
-	BitField        uint                    `json:"bit_field"`
-	DiscordIdentity *map[string]interface{} `gorm:"type:jsonb;default:null" json:"discord_identity"`
-
-	Coins  uint     `json:"coins"`
-	Guilds []Guilds `gorm:"foreignKey:UserID"`
+	DiscordID       string       `gorm:"unique;not null" json:"discord_id"`
+	BitField        uint         `gorm:"default:0" json:"bit_field"`
+	AccessToken     string       `json:"access_token"`
+	RefreshToken    string       `json:"refresh_token"`
+	ExpiresIn       time.Time    `json:"expires_in"`
+	DiscordIdentity *DiscordUser `gorm:"type:jsonb;default:null" json:"discord_identity"`
+	Coins           uint         `json:"coins"`
+	Guilds          []Guilds     `gorm:"foreignKey:UserID"`
 
 	GuildsJoined uint `json:"guilds_joined"`
 	GuildsLeft   uint `json:"guilds_left"`
@@ -26,7 +31,45 @@ func (u *User) TableName() string {
 	return "users.identity"
 }
 
-func (u *User) GetDiscordIdentity() map[string]interface{} {
+type DiscordUser struct {
+	ID            string `json:"id"`
+	Username      string `json:"username"`
+	Discriminator string `json:"discriminator"`
+	Avatar        string `json:"avatar"`
+	Bot           bool   `json:"bot"`
+	System        bool   `json:"system"`
+	MFA           bool   `json:"mfa_enabled"`
+	Locale        string `json:"locale"`
+	Verified      bool   `json:"verified"`
+	Email         string `json:"email"`
+	Flags         uint   `json:"flags"`
+	PremiumType   uint   `json:"premium_type"`
+	PublicFlags   uint   `json:"public_flags"`
+}
+
+func (du *DiscordUser) Value() (driver.Value, error) {
+	if du == nil {
+		return nil, nil
+	}
+	return json.Marshal(du)
+}
+
+// Scan implémente l'interface sql.Scanner pour la désérialisation depuis JSONB
+func (du *DiscordUser) Scan(value interface{}) error {
+	if value == nil {
+		*du = DiscordUser{}
+		return nil
+	}
+
+	data, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+
+	return json.Unmarshal(data, du)
+}
+
+func (u *User) GetDiscordIdentity() DiscordUser {
 	return *u.DiscordIdentity
 }
 
