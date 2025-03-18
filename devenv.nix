@@ -13,13 +13,8 @@
 
   # https://devenv.sh/languages/
   # languages.rust.enable = true;
-    languages.go.enable = true;
-    languages.javascript.enable = true;
-
-  android = {
-    enable = true;
-    flutter.enable = true;
-  };
+  languages.go.enable = true;
+  languages.javascript.enable = true;
 
   # https://devenv.sh/processes/
   # processes.cargo-watch.exec = "cargo-watch";
