@@ -15,8 +15,13 @@ import (
 func DiscordOauth2(w http.ResponseWriter, r *http.Request) {
 	// let's get the envs variables
 	clientID := utils.GetEnv("DISCORD_CLIENT_ID", "")
+
+	redirectURI := r.URL.Query().Get("redirect_uri")
+	if redirectURI == "" {
+		redirectURI = fmt.Sprintf("http://%s/discord/callback", r.Host)
+	}
 	// format the URL
-	urlFormatted := fmt.Sprintf("https://discord.com/api/oauth2/authorize?client_id=%s&redirect_uri=http://localhost:4000/discord/callback&response_type=code&scope=identify&prompt=none", clientID)
+	urlFormatted := fmt.Sprintf("https://discord.com/api/oauth2/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=identify&prompt=none", clientID, redirectURI)
 
 	http.Redirect(w, r, urlFormatted, http.StatusSeeOther)
 }
@@ -35,6 +40,11 @@ func DiscordCallback(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusBadRequest, "No code provided")
 		return
 	}
+
+	redirectURI := r.URL.Query().Get("redirect_uri")
+	if redirectURI == "" {
+		redirectURI = "http://localhost:4000/discord/callback"
+	}
 	// let's get the envs variables
 	clientID := utils.GetEnv("DISCORD_CLIENT_ID", "")
 	clientSecret := utils.GetEnv("DISCORD_CLIENT_SECRET", "")
@@ -50,7 +60,7 @@ func DiscordCallback(w http.ResponseWriter, r *http.Request) {
 	form := url.Values{}
 	form.Add("grant_type", "authorization_code")
 	form.Add("code", code)
-	form.Add("redirect_uri", "http://localhost:4000/discord/callback")
+	form.Add("redirect_uri", redirectURI)
 
 	req.Body = io.NopCloser(strings.NewReader(form.Encode()))
 	resp, err := client.Do(req)
