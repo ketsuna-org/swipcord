@@ -9,21 +9,28 @@
     pkgs.git
   ];
 
+  dotenv.enable = true;
+
   # https://devenv.sh/languages/
   # languages.rust.enable = true;
-    languages.go.enable = true;
-    languages.javascript.enable = true;
-
-  android = {
-    enable = true;
-    flutter.enable = true;
-  };
+  languages.go.enable = true;
+  languages.javascript.enable = true;
 
   # https://devenv.sh/processes/
   # processes.cargo-watch.exec = "cargo-watch";
+  processes.filewatcher.exec = "cd api && go run main.go";
 
   # https://devenv.sh/services/
   # services.postgres.enable = true;
+  services.postgres = {
+    enable = true;
+    initialDatabases = [{
+      name = "swipcord";
+      user = "swipcord";
+      pass = "swipcord";
+      }];
+    listen_addresses = "0.0.0.0";
+  };
 
   # https://devenv.sh/scripts/
   scripts.hello.exec = ''
@@ -33,6 +40,12 @@
   enterShell = ''
     hello
     git --version
+
+    export DB_NAME=swipcord
+    export DB_USER=swipcord
+    export DB_PASS=swipcord
+    export DB_HOST=localhost
+    export DB_PORT=5432
   '';
 
   # https://devenv.sh/tasks/
