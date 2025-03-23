@@ -36,16 +36,17 @@
   scripts.hello.exec = ''
     echo hello from $GREET
   '';
-
+  env = {
+    DB_NAME = "swipcord";
+    DB_USER = "swipcord";
+    DB_PASS = "swipcord";
+    DB_HOST = "localhost";
+    DB_PORT = "5432";
+    JWT_SECRET = "secret";
+  };
   enterShell = ''
     hello
     git --version
-
-    export DB_NAME=swipcord
-    export DB_USER=swipcord
-    export DB_PASS=swipcord
-    export DB_HOST=localhost
-    export DB_PORT=5432
   '';
 
   # https://devenv.sh/tasks/
