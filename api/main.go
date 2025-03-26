@@ -6,9 +6,7 @@ import (
 	"api/utils"
 	"fmt"
 	"log"
-	"net/http"
 
-	mux "github.com/gorilla/mux"
 	"gorm.io/gorm"
 )
 
@@ -53,24 +51,5 @@ func init() {
 
 func main() {
 	// the Database successfully connected => do something now :)
-	r := mux.NewRouter()
-	// add Database to the context
-	r.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-			ctx = models.ContextWithDatabase(ctx, database)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	})
-
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello, World!"))
-	})
-
-	r.Handle("/discord/login", http.HandlerFunc(controllers.DiscordOauth2))
-	r.Handle("/discord/callback", http.HandlerFunc(controllers.DiscordCallback))
-	r.Handle("/user", http.HandlerFunc(controllers.UserFormatted))
-
-	log.Println("Server is running on port 4000")
-	log.Panic(http.ListenAndServe(":4000", r))
+	controllers.InitRouter()
 }

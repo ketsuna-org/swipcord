@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"api/middlewares"
 	"api/models"
 	"api/utils"
 	"encoding/json"
@@ -100,7 +101,7 @@ func DiscordCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// retrieve database from the context
-	db := models.GetDatabase(r)
+	db := models.Database
 	user := models.User{}
 	// let's modify expiration time.
 	// we will add the current time to the expiration time
@@ -126,20 +127,19 @@ func DiscordCallback(w http.ResponseWriter, r *http.Request) {
 		user.ExpiresIn = expireTime
 		db.Save(&user)
 	}
-	redirectUri := fmt.Sprintf("http://%s/user?discord_id=%s", r.Host, user.DiscordID)
-	http.Redirect(w, r, redirectUri, http.StatusSeeOther)
-}
-
-func UserFormatted(w http.ResponseWriter, r *http.Request) {
-	db := models.GetDatabase(r)
-	// get Discord ID from the URL parameters
-	discordID := r.URL.Query().Get("discord_id")
-	if discordID == "" {
-		utils.RespondWithError(w, http.StatusBadRequest, "No Discord ID provided")
+	token, err := utils.GenerateJWT(user.DiscordID)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	user := models.User{}
-	// get the user from the database
-	db.Where("discord_id = ?", discordID).First(&user)
+
+	utils.RespondWithJSON(w, map[string]interface{}{
+		"DiscordIdentity": discordUser,
+		"token":           token,
+	}, http.StatusOK)
+}
+
+func GetUser(w http.ResponseWriter, r *http.Request) {
+	user := r.Context().Value(middlewares.UserContextKey).(*models.User)
 	utils.RespondWithJSON(w, user, http.StatusOK)
 }
